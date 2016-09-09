@@ -1,0 +1,19 @@
+import java.util.ArrayList;
+import java.util.List;
+
+import com.huawei.service.FindDEVMLineService;
+
+public class FindDEVMLineServiceImpl implements FindDEVMLineService{
+	
+	@Override
+	public List<String> findDEVMList(List<String> content,String url){
+		List<String> devmList = new ArrayList<String>();
+		for(String str:content){
+			if(str.startsWith(url)){
+				devmList.add(str);
+			}
+		}
+		return devmList;
+	}
+
+}
