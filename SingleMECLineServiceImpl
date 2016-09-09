@@ -1,0 +1,54 @@
+import java.util.List;
+
+import com.huawei.service.FindDEVMLineService;
+import com.huawei.service.SingleMCELineService;
+
+public class import java.util.List;
+
+import com.huawei.service.FindDEVMLineService;
+import com.huawei.service.SingleMCELineService;
+
+public class SingleMECLineServiceImpl implements SingleMCELineService {
+	
+
+	@Override
+	public List<String> removeMCEList(List<String> mcelist) {
+		for (int i = 0; i < mcelist.size()-1; i++)  //外循环是循环的次数
+        {
+            for (int j = mcelist.size() - 1 ; j > i; j--)  //内循环是 外循环一次比较的次数
+            {
+            	String[] str1 = mcelist.get(i).split("\\(");
+            	String[] str2 = mcelist.get(j).split("\\(");
+                if (str1[1].substring(0, 16).equals(str2[1].substring(0, 16)))
+                {
+                	mcelist.remove(i);
+                }
+            }
+        }
+		return mcelist;
+	}
+	
+
+}
+ implements SingleMCELineService {
+	
+
+	@Override
+	public List<String> removeMCEList(List<String> mcelist) {
+		for (int i = 0; i < mcelist.size()-1; i++)  //外循环是循环的次数
+        {
+            for (int j = mcelist.size() - 1 ; j > i; j--)  //内循环是 外循环一次比较的次数
+            {
+            	String[] str1 = mcelist.get(i).split("\\(");
+            	String[] str2 = mcelist.get(j).split("\\(");
+                if (str1[1].substring(0, 16).equals(str2[1].substring(0, 16)))
+                {
+                	mcelist.remove(i);
+                }
+            }
+        }
+		return mcelist;
+	}
+	
+
+}
