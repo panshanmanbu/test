@@ -1,0 +1,28 @@
+import java.util.ArrayList;
+import java.util.List;
+
+import com.huawei.service.FindDEVMLineService;
+import com.huawei.service.SingleRMOLineService;
+
+public class SingleRMOLineServiceImpl implements SingleRMOLineService{
+	
+
+	//去除重复行
+	@Override
+	public List<String> removeRMOList(List<String> rmolist){
+		
+		for (int i = 0; i < rmolist.size()-1; i++)  //外循环是循环的次数
+        {
+            for (int j = rmolist.size() - 1 ; j > i; j--)  //内循环是 外循环一次比较的次数
+            {
+            	String[] str1 = rmolist.get(i).split("\\(");
+            	String[] str2 = rmolist.get(j).split("\\(");
+                if (str1[1].substring(0, 16).equals(str2[1].substring(0, 16)))
+                {
+                	rmolist.remove(j);
+                }
+            }
+        }
+		return rmolist;
+	}
+}
