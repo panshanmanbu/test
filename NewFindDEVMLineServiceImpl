@@ -1,0 +1,157 @@
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import com.huawei.service.FindDEVMLineService;
+import com.huawei.service.SingleMCELineService;
+import com.huawei.service.SingleRMOLineService;
+import com.huawei.util.ReadFileUtil;
+
+public class FindOthersLineServiceImpl {
+
+	FindDEVMLineServiceImpl findDEVMService = new FindDEVMLineServiceImpl();
+	SingleRMOLineServiceImpl singleRMOLineService = new SingleRMOLineServiceImpl();
+	SingleMECLineServiceImpl singleMECLineService= new SingleMECLineServiceImpl();
+
+
+
+	//根据RMO行找到MCE行
+	public List<String> findMCELines(String url) throws FileNotFoundException, IOException{
+		
+		List<String> linesList = new ArrayList<String>();
+		
+		List<String> rmoList = findDEVMService.findDEVMList(ReadFileUtil.readFile(url), "[DEVM] report mod obj");
+		List<String> singleRmoList = singleRMOLineService.removeRMOList(rmoList);
+		List<String> mceList = findDEVMService.findDEVMList(ReadFileUtil.readFile(url), "[DEVM] module config exists");
+		List<String> singleMceList = singleMECLineService.removeMCEList(mceList);
+
+		
+		for(String rmo:singleRmoList){
+			String[] str1 = rmo.split("\\(");
+			for(String mce:singleMceList)
+			{
+				String[] str2 = mce.split("\\(");
+				if(str1[1].substring(0, 16).equals(str2[1].substring(0, 16))){
+					String rmoAndMce = rmo.concat(mce);
+					linesList.add(rmoAndMce);
+				}
+			}
+		}
+
+		return linesList;
+	}
+	
+	
+	//根据第二行找到第三行
+	public List<String> findIMLines(String url,List<String> rmoAndMceList) throws FileNotFoundException, IOException{
+	
+		List<String> rmoAndMecAndImList = new ArrayList<String>();
+		List<String> imList = findDEVMService.findDEVMList(ReadFileUtil.readFile(url), "[DEVM] init moduleid");
+		for(String rmoAndMce:rmoAndMceList){
+			String[] str1 = rmoAndMce.split("\\(");
+			for(String im:imList){
+				String[] str2 = im.split("\\=");
+				if(str1[4].substring(28, 30).equals(str2[1].substring(0, 2))){
+					String all = rmoAndMce.concat(im);
+					rmoAndMecAndImList.add(all);
+				}
+			}
+
+		}
+		
+//		List<String> imList = findDEVMService.findDEVMList(ReadFileUtil.readFile(url), "[DEVM] init moduleid");
+//		for(String rmoAndMce:rmoAndMceList){
+//			Pattern pattern = Pattern.compile("\\,\\d+\\)");
+//			Matcher matcher = pattern.matcher(rmoAndMce);
+//			while(matcher.find()){
+//				String str1 = matcher.group(0);
+//				for(String im:imList){
+//					String[] str2 = im.split("\\=");
+//					if(str1.equals(str2[1].substring(0, 2))){
+//						String rmoAndMecAndIm = rmoAndMce.concat(im);
+//						rmoAndMecAndImList.add(rmoAndMecAndIm);
+//						
+//					}
+//			}
+//		}
+//	}
+		return rmoAndMecAndImList;
+	}
+	
+	
+	//根据第二行第二个参数为0x103e，找到第四行
+	public List<String> findPICLine(String url,List<String> rmoAndMecAndImList) throws FileNotFoundException, IOException{
+		
+		List<String> list = new ArrayList<String>();
+		List<String> picList = findDEVMService.findDEVMList(ReadFileUtil.readFile(url), "PIC");
+		for(String rmoAndMecAndim:rmoAndMecAndImList){
+			String[] str1 = rmoAndMecAndim.split("\\(");
+			String all=rmoAndMecAndim;
+			if(str1[4].substring(10, 16).equals("0x103e")){
+				for(String pic:picList){
+					Integer mce1 = Integer.parseInt(str1[4].substring(3, 5), 16);//第二行第二个参数的四五位
+					Integer mce2 = Integer.parseInt(str1[4].substring(5, 7), 16);//第二行第二个参数六七位
+					Integer im1 = Integer.parseInt(pic.substring(4, 5));//PIC行的第一个参数
+					Integer im2 = Integer.parseInt(pic.substring(6, 7));//PIC行的第二个参数
+					if(mce1 == im1 && mce2 ==im2){
+						all = rmoAndMecAndim.concat(pic);
+						break;
+					}else{
+						all = rmoAndMecAndim;
+					}
+					
+				}
+				
+			}
+			list.add(all);
+		}
+		return list;
+		
+	}
+
+	//每个模块放入map中
+	public Map<String, List<String>> outDEVMLine(List<String> allList){
+		
+		Map<String, List<String>> devmMap = new HashMap<String,List<String>>();
+		
+		for(String all:allList){
+
+//			Pattern pattern = Pattern.compile("^([0-2][0-9]):([0-5][0-9]):([0-5][0-9])$");
+			List<String> devmList = new ArrayList<String>();
+			Pattern pattern1 = Pattern.compile("\\d+\\:\\d+\\:\\d+");
+			Matcher matcher1 = pattern1.matcher(all);
+			while(matcher1.find()){
+				devmList.add(matcher1.group());
+				
+			}
+			Pattern pattern2 = Pattern.compile("\\([a-z\\d]+\\)");
+			Matcher matcher2 = pattern2.matcher(all);
+			if(matcher2.find()){
+				String key = matcher2.group(0);
+				devmMap.put(key, devmList);
+			}
+			
+		}
+		
+		return devmMap;
+		
+	}
+	
+	
+	
+	public static void main(String[] args) throws FileNotFoundException, IOException {
+		
+		FindOthersLineServiceImpl impl = new FindOthersLineServiceImpl();
+		List<String> list = impl.findMCELines("startup_config.txt");
+		List<String> list2 =impl.findIMLines("startup_config.txt", list);
+		List<String> list3 = impl.findPICLine("startup_config.txt", list2);
+		System.out.println(impl.outDEVMLine(list3));
+	}
+
+}
