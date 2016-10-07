@@ -1,0 +1,59 @@
+package com.action;
+
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.ModelAndView;
+
+import com.entity.DEVM;
+import com.service.devmService;
+
+@Controller
+@RequestMapping("/admin")
+public class devmAction {
+	
+	@Autowired
+	@Qualifier("devmService")
+	devmService devmService;
+	
+	@RequestMapping(value="/devm",method=RequestMethod.GET)
+	public ModelAndView getDevm(HttpSession session,HttpServletRequest request){
+		ModelAndView mav =new ModelAndView("/NewFile1");
+		DEVM devm=new DEVM();
+		devm.setDevmModel("0x00000");
+		devm.setRmoTime("00:00:07");
+		devm.setMceTime("00:00:08");
+		devm.setAllTime("00:00:09");
+		
+		List<DEVM> list = devmService.getAll();
+		DEVM devmOne  = list.get(1);
+		mav.addObject("devmOne",devmOne);
+		return mav;
+	}
+	
+	@ResponseBody
+	@RequestMapping(value="/change",method=RequestMethod.POST)
+	public ModelAndView change(HttpSession session,HttpServletRequest request){
+		ModelAndView mav =new ModelAndView("/NewFile1");
+		String getedId = request.getParameter("id");
+		DEVM devm = devmService.getById(getedId);
+		
+		devm.setMceTime(request.getParameter("selected"));
+		devmService.update(devm);
+		mav.addObject("devmOne", devm);
+		System.out.println(devm.getMceTime());
+		return mav;
+	}
+
+	
+}
